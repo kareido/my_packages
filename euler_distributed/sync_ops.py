@@ -4,7 +4,6 @@ from ._slurm_env import *
 
 
 def all_reduce_mean(tensor_list, group=None):
-    handler_list = []
     if group is None:
         _allreduce = lambda tensor: dist.all_reduce(tensor, dist.ReduceOp.SUM)
     else:
@@ -14,12 +13,10 @@ def all_reduce_mean(tensor_list, group=None):
     if get_world_size() == 1: return
     for tensor in tensor_list:
         _allreduce(tensor)
-        handler_list.append(handler)
         tensor.div_(dist.get_world_size())
 
 
 def all_reduce_sum(tensor_list, group=None):
-    handler_list = []
     if group is None:
         _allreduce = lambda tensor: dist.all_reduce(tensor, dist.ReduceOp.SUM)
     else:
@@ -32,7 +29,6 @@ def all_reduce_sum(tensor_list, group=None):
 
 
 def all_reduce_max(tensor_list, group=None):
-    handler_list = []
     if group is None:
         _allreduce = lambda tensor: dist.all_reduce(tensor, dist.ReduceOp.MAX)
     else:
@@ -45,7 +41,6 @@ def all_reduce_max(tensor_list, group=None):
 
 
 def all_reduce_min(tensor_list, group=None):
-    handler_list = []
     if group is None:
         _allreduce = lambda tensor: dist.all_reduce(tensor, dist.ReduceOp.MAX)
     else:
@@ -89,5 +84,31 @@ def all_reduce(tensor_list, op='SUM', group=None):
     assert op in switch_dict, 'unknown operation {}'.format(op)
 
     switch_dict['op'](tensor_list, group=group)
+
+
+def sync_state(network, src=0):
+    if get_world_size() == 1: return
+    tensor_list = list(network.state_dict().values())
+    if src == 'all':
+        all_reduce_mean(tensor_list)
+    else:
+        broadcast(tensor_list, src)
+
+def sync_grad_mean(network):
+    if get_world_size() == 1: return
+    all_reduce_mean([param.grad.data for param in network.parameters() if param.grad is not None])
+
+def sync_grad_sum(network):
+    if get_world_size() == 1: return
+    all_reduce_sum([param.grad.data for param in network.parameters() if param.grad is not None])
+
+def sync_bn_stat(network):
+    if get_world_size() == 1: return
+    tensor_list = []
+    for mod in network.modules():
+        if type(mod) == torch.nn.BatchNorm2d:
+            tensor_list.append(mod.running_mean)
+            tensor_list.append(mod.running_var)
+    all_reduce_mean(tensor_list)
 
 
