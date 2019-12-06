@@ -94,13 +94,16 @@ def sync_state(network, src=0):
     else:
         broadcast(tensor_list, src)
 
+
 def sync_grad_mean(network):
     if get_world_size() == 1: return
     all_reduce_mean([param.grad.data for param in network.parameters() if param.grad is not None])
 
+
 def sync_grad_sum(network):
     if get_world_size() == 1: return
     all_reduce_sum([param.grad.data for param in network.parameters() if param.grad is not None])
+
 
 def sync_bn_stat(network):
     if get_world_size() == 1: return
@@ -110,5 +113,6 @@ def sync_bn_stat(network):
             tensor_list.append(mod.running_mean)
             tensor_list.append(mod.running_var)
     all_reduce_mean(tensor_list)
+
 
 
