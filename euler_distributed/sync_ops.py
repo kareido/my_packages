@@ -14,7 +14,6 @@ def all_reduce_mean(tensor_list, group=None):
     if get_world_size() == 1: return
     for tensor in tensor_list:
         _allreduce(tensor)
-        handler_list.append(handler)
         tensor.div_(dist.get_world_size())
 
 
