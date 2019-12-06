@@ -1,6 +1,7 @@
 import torch
 import torch.distributed as dist
-from ._slurm import *
+from ._slurm_env import *
+
 
 def all_reduce_mean(tensor_list, group=None):
     handler_list = []
@@ -75,5 +76,18 @@ def barrier(group=None):
     else:
         _barrier = lambda: dist.barrier(group)
     _barrier()
+
+
+def all_reduce(tensor_list, op='SUM', group=None):
+    switch_dict = {
+        'SUM': all_reduce_sum,
+        'MEAN': all_reduce_mean,
+        'MAX': all_reduce_max,
+        'MIN': all_reduce_min,
+    }
+    assert type(op) == str, 'op should be a string'
+    assert op in switch_dict, 'unknown operation {}'.format(op)
+
+    switch_dict['op'](tensor_list, group=group)
 
 

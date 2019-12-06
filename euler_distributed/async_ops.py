@@ -1,7 +1,7 @@
 import torch
 import torch.distributed as dist
 from torch.nn.utils import parameters_to_vector, vector_to_parameters
-from ._slurm import *
+from ._slurm_env import *
 
 
 def isend_list(tensor_list, dst, group=None, tag=0):

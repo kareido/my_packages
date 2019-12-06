@@ -1,7 +1,7 @@
 import os
 import torch
 import torch.distributed as dist
-from ._slurm import *
+from ._slurm_env import *
 
 
 def _get_slurm_addr():
@@ -10,9 +10,9 @@ def _get_slurm_addr():
     if '[' in node_list:
         beg = node_list.find('[')
         pos1 = node_list.find('-', beg)
-        if pos1 < 0: pos1 = 1000
+        if pos1 < 0: pos1 = len(node_list)
         pos2 = node_list.find(',', beg)
-        if pos2 < 0: pos2 = 1000
+        if pos2 < 0: pos2 = len(node_list)
         node_list = node_list[:min(pos1, pos2)].replace('[', '')
         
     addr = node_list.replace('-', '.').split(',')[0]
@@ -36,6 +36,8 @@ def slurm_data_parallel_arch(port=23032, backend='nccl'):
         os.environ['MASTER_ADDR'] = _get_slurm_addr()
         os.environ['WORLD_SIZE'] = str(world_size)
         os.environ['RANK'] = str(rank)
+
+        print(os.environ['MASTER_PORT'], os.environ['MASTER_ADDR'], os.environ['WORLD_SIZE'], os.environ['RANK'])
         
         dist.init_process_group(backend=backend)
 
