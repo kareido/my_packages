@@ -1,3 +1,4 @@
+import multiprocessing as mp
 import os
 import torch
 import torch.distributed as dist
@@ -20,8 +21,10 @@ def _get_slurm_addr():
     return addr
 
 
-def slurm_data_parallel_arch(port=23032, backend='nccl'):
+def slurm_data_parallel_arch(port=23032, backend='nccl', method='spawn'):
     os.environ['DISTRIBUTED_BACKEND'] = backend
+    if mp.get_start_method(allow_none=True) != method:
+        mp.set_start_method(method, force=True)
 
     rank, world_size = get_rank(), get_world_size()
     num_gpus = torch.cuda.device_count()
