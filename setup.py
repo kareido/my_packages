@@ -20,7 +20,7 @@ setup(
 
 try:
     import euler_distributed as edist
-    print('>>> euler_distributed installed <<<')
+    print('>>> euler_distributed exists <<<')
 except Exception as exc:
     print(exc)
 
